@@ -44,6 +44,7 @@ import com.philkes.notallyx.presentation.activity.main.MainActivity
 import com.philkes.notallyx.presentation.activity.main.MainActivity.Companion.EXTRA_FRAGMENT_TO_OPEN
 import com.philkes.notallyx.presentation.activity.main.MainActivity.Companion.EXTRA_SKIP_START_VIEW_ON_BACK
 import com.philkes.notallyx.presentation.activity.main.fragment.DisplayLabelFragment.Companion.EXTRA_DISPLAYED_LABEL
+import com.philkes.notallyx.presentation.activity.note.reminders.RemindersActivity
 import com.philkes.notallyx.presentation.add
 import com.philkes.notallyx.presentation.addFastScroll
 import com.philkes.notallyx.presentation.addIconButton
@@ -58,6 +59,7 @@ import com.philkes.notallyx.presentation.setCancelButton
 import com.philkes.notallyx.presentation.setControlsContrastColorForAllViews
 import com.philkes.notallyx.presentation.setLightStatusAndNavBar
 import com.philkes.notallyx.presentation.setupProgressDialog
+import com.philkes.notallyx.presentation.setupReminderChip
 import com.philkes.notallyx.presentation.showKeyboard
 import com.philkes.notallyx.presentation.view.misc.NotNullLiveData
 import com.philkes.notallyx.presentation.view.note.ErrorAdapter
@@ -197,6 +199,7 @@ abstract class EditActivity(private val type: Type) : LockedActivity<ActivityEdi
                 visibility = View.VISIBLE
                 addFastScroll(this@EditActivity)
             }
+            setupEditNoteReminderChip()
         }
 
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
@@ -209,6 +212,14 @@ abstract class EditActivity(private val type: Type) : LockedActivity<ActivityEdi
                 // Let the system handle the crash
                 DEFAULT_EXCEPTION_HANDLER?.uncaughtException(thread, throwable)
             }
+        }
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+        lifecycleScope.launch {
+            notallyModel.refreshOriginalNote()
+            setupEditNoteReminderChip()
         }
     }
 
@@ -945,6 +956,18 @@ abstract class EditActivity(private val type: Type) : LockedActivity<ActivityEdi
                         true
                     }
                 }
+            }
+        }
+    }
+
+    fun setupEditNoteReminderChip() {
+        notallyModel.originalNote?.let { note ->
+            binding.EditNoteReminderChip.setupReminderChip(note)
+            binding.EditNoteReminderChip.setOnClickListener {
+                val intent =
+                    Intent(this@EditActivity, RemindersActivity::class.java)
+                        .putExtra(RemindersActivity.NOTE_ID, note.id)
+                startActivity(intent)
             }
         }
     }
