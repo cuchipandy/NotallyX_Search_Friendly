@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
@@ -38,7 +39,8 @@ class SearchResult(
     @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
     private val resultFlow: Flow<List<Item>> =
         searchParams
-            .debounce(300)
+            .debounce(100)
+            .distinctUntilChanged()
             .flatMapLatest { params ->
                 if (params == null) {
                     _isLoading.value = false
