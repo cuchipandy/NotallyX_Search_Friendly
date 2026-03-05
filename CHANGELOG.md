@@ -1,5 +1,13 @@
 # Changelog
 
+## [v7.9.1](https://github.com/Crustack/NotallyX/tree/v7.9.1) (2026-03-05)
+
+[Full Changelog](https://github.com/Crustack/NotallyX/compare/v7.9.0...v7.9.1)
+
+### Fixed Bugs
+
+- Save buttons missing when editing txt files [\#892](https://github.com/Crustack/NotallyX/issues/892)
+
 ## [v7.9.0](https://github.com/Crustack/NotallyX/tree/v7.9.0) (2026-03-05)
 
 [Full Changelog](https://github.com/Crustack/NotallyX/compare/v7.8.1...v7.9.0)
