@@ -1,0 +1,21 @@
+- Aktions-Buttons in der Bearbeitungsansicht anpassbar
+
+- Standard-Datumsformat für Erinnerungen
+
+- Neuer Button für Erinnerungen oben rechts
+
+- Anzeige von Erinnerungsdetails direkt in der Notiz
+
+- Option für automatische Backups in festen Intervallen
+
+- Wiederholungsoptionen für Erinnerungen hinzugefügt
+
+- Shortcuts zum Scrollen nach ganz oben oder unten
+
+- Detailansicht für Erinnerungseinstellungen
+
+- Aktive Benachrichtigungen werden nach Neustart wiederhergestellt
+
+- Verzögerungen (Stuttering) bei der Suche behoben
+
+- Fehler beim Überschreiben existierender Dateien behoben

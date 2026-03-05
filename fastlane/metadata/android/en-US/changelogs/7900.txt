@@ -1,0 +1,21 @@
+- Interchangeable action buttons in edit view
+
+- Default datetime format for reminders
+
+- New reminder button in top right corner
+
+- Display reminder details directly in notes
+
+- Automatic backup option at specific intervals
+
+- Added reminder repetition options
+
+- Shortcuts to scroll to top or bottom
+
+- Detailed reminder configuration screen
+
+- Restore active notifications after device reboot
+
+- Fixed stuttering during search
+
+- Fixed issue when overwriting existing files
