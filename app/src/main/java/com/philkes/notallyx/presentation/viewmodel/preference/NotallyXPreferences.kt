@@ -41,7 +41,7 @@ class NotallyXPreferences private constructor(private val context: Context) {
             R.string.text_size_note_editor,
         )
     val textSizeOverview =
-        FloatPreference("textSizeOverview", preferences, 14f, 12f, 32f, R.string.text_size_overview)
+        FloatPreference("textSizeOverview", preferences, 16f, 12f, 32f, R.string.text_size_overview)
     val dateFormat =
         createEnumPreference(preferences, "dateFormat", DateFormat.RELATIVE, R.string.date_format)
     val applyDateFormatInNoteView =
