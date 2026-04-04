@@ -1,5 +1,6 @@
 package com.philkes.notallyx.presentation.viewmodel
 
+import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.content.Intent
@@ -25,6 +26,7 @@ import com.philkes.notallyx.data.dao.BaseNoteDao
 import com.philkes.notallyx.data.dao.CommonDao
 import com.philkes.notallyx.data.dao.LabelDao
 import com.philkes.notallyx.data.dao.NoteReminder
+import com.philkes.notallyx.data.dao.moveBaseNotes
 import com.philkes.notallyx.data.imports.ImportException
 import com.philkes.notallyx.data.imports.ImportProgress
 import com.philkes.notallyx.data.imports.ImportSource
@@ -41,8 +43,8 @@ import com.philkes.notallyx.data.model.Item
 import com.philkes.notallyx.data.model.Label
 import com.philkes.notallyx.data.model.SearchResult
 import com.philkes.notallyx.data.model.deepCopy
-import com.philkes.notallyx.data.model.toNoteIdReminders
 import com.philkes.notallyx.presentation.activity.main.fragment.settings.SettingsFragment.Companion.EXTRA_SHOW_IMPORT_BACKUPS_FOLDER
+import com.philkes.notallyx.presentation.activity.note.refreshStatusBarPin
 import com.philkes.notallyx.presentation.getQuantityString
 import com.philkes.notallyx.presentation.restartApplication
 import com.philkes.notallyx.presentation.setCancelButton
@@ -57,7 +59,6 @@ import com.philkes.notallyx.presentation.viewmodel.preference.NotallyXPreference
 import com.philkes.notallyx.presentation.viewmodel.preference.NotallyXPreferences.Companion.START_VIEW_DEFAULT
 import com.philkes.notallyx.presentation.viewmodel.preference.NotallyXPreferences.Companion.START_VIEW_UNLABELED
 import com.philkes.notallyx.presentation.viewmodel.preference.Theme
-import com.philkes.notallyx.presentation.viewmodel.progress.DeleteProgress
 import com.philkes.notallyx.presentation.viewmodel.progress.ExportNotesProgress
 import com.philkes.notallyx.utils.ActionMode
 import com.philkes.notallyx.utils.Cache
@@ -74,7 +75,7 @@ import com.philkes.notallyx.utils.backup.getPreviousLabels
 import com.philkes.notallyx.utils.backup.getPreviousNotes
 import com.philkes.notallyx.utils.backup.importZip
 import com.philkes.notallyx.utils.backup.readAsBackup
-import com.philkes.notallyx.utils.cancelNoteReminders
+import com.philkes.notallyx.utils.cancelPinAndReminders
 import com.philkes.notallyx.utils.copyToLarge
 import com.philkes.notallyx.utils.deleteAttachments
 import com.philkes.notallyx.utils.getBackupDir
@@ -82,7 +83,6 @@ import com.philkes.notallyx.utils.getCurrentImagesDirectory
 import com.philkes.notallyx.utils.getExternalMediaDirectory
 import com.philkes.notallyx.utils.log
 import com.philkes.notallyx.utils.migrateAllAttachments
-import com.philkes.notallyx.utils.scheduleNoteReminders
 import com.philkes.notallyx.utils.security.DecryptionException
 import com.philkes.notallyx.utils.security.EncryptionException
 import com.philkes.notallyx.utils.security.decryptDatabase
@@ -617,9 +617,22 @@ class BaseNoteModel(private val app: Application) : AndroidViewModel(app) {
     }
 
     fun pinBaseNotes(pinned: Boolean) {
-        val id = actionMode.selectedIds.toLongArray()
+        val ids = actionMode.selectedIds.toLongArray()
         actionMode.close(true)
-        viewModelScope.launch(Dispatchers.IO) { baseNoteDao.updatePinned(id, pinned) }
+        viewModelScope.launch(Dispatchers.IO) { baseNoteDao.updatePinned(ids, pinned) }
+    }
+
+    fun pinBaseNotesToStatusBar(activity: Activity, pinnedToStatusBar: Boolean) {
+        val ids = actionMode.selectedIds.toLongArray()
+        actionMode.close(true)
+        viewModelScope.launch {
+            val updatedNotes =
+                withContext(Dispatchers.IO) {
+                    baseNoteDao.updatePinnedToStatus(ids, pinnedToStatusBar)
+                    baseNoteDao.getByIds(ids)
+                }
+            updatedNotes.forEach { activity.refreshStatusBarPin(it) }
+        }
     }
 
     fun colorBaseNote(color: String) {
@@ -636,27 +649,19 @@ class BaseNoteModel(private val app: Application) : AndroidViewModel(app) {
         viewModelScope.launch(Dispatchers.IO) { baseNoteDao.updateColor(oldColor, newColor) }
     }
 
-    fun moveBaseNotes(folder: Folder): LongArray {
+    fun moveBaseNotes(folder: Folder, callable: (() -> Unit)? = null): LongArray {
         val ids = actionMode.selectedIds.toLongArray()
         actionMode.close(false)
-        moveBaseNotes(ids, folder)
+        moveBaseNotes(ids, folder, callable)
         return ids
     }
 
-    fun moveBaseNotes(ids: LongArray, folder: Folder) {
-        viewModelScope.launch(
-            Dispatchers.IO
-        ) { // Only reminders of notes in NOTES folder are active
-            if (folder == Folder.DELETED) {
-                baseNoteDao.move(ids, folder, System.currentTimeMillis())
-            } else {
-                baseNoteDao.move(ids, folder)
-            }
-            val notes = baseNoteDao.getByIds(ids).toNoteIdReminders()
-            // Only reminders of notes in NOTES folder are active
-            when (folder) {
-                Folder.NOTES -> app.scheduleNoteReminders(notes)
-                else -> app.cancelNoteReminders(notes)
+    fun moveBaseNotes(ids: LongArray, folder: Folder, callable: (() -> Unit)? = null) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                app.moveBaseNotes(baseNoteDao, ids, folder)
+            } finally {
+                callable?.invoke()
             }
         }
     }
@@ -666,8 +671,8 @@ class BaseNoteModel(private val app: Application) : AndroidViewModel(app) {
         viewModelScope.launch(Dispatchers.IO) { baseNoteDao.updateLabels(id, labels) }
     }
 
-    fun deleteSelectedBaseNotes() {
-        deleteBaseNotes(actionMode.selectedIds.toLongArray())
+    suspend fun deleteSelectedBaseNotes(): Collection<BaseNote> {
+        return deleteBaseNotes(actionMode.selectedIds.toLongArray())
     }
 
     fun deleteAll() {
@@ -676,30 +681,22 @@ class BaseNoteModel(private val app: Application) : AndroidViewModel(app) {
                 withContext(Dispatchers.IO) {
                     Pair(baseNoteDao.getAllIds().toLongArray(), baseNoteDao.getAllReminders())
                 }
-            app.cancelNoteReminders(noteReminders)
-            deleteBaseNotes(ids)
+            noteReminders.forEach { app.cancelPinAndReminders(it.id, it.reminders) }
+            val deletedNotes = deleteBaseNotes(ids)
+            app.deleteAttachments(deletedNotes)
             withContext(Dispatchers.IO) { labelDao.deleteAll() }
             savePreference(preferences.startView, START_VIEW_DEFAULT)
             app.showToast(R.string.cleared_data)
         }
     }
 
-    private fun deleteBaseNotes(ids: LongArray) {
-        val attachments = ArrayList<Attachment>()
-        viewModelScope.launch {
-            progress.value = DeleteProgress(indeterminate = true)
-            val notes = withContext(Dispatchers.IO) { baseNoteDao.getByIds(ids) }
-            notes.forEach { note ->
-                attachments.addAll(note.images)
-                attachments.addAll(note.files)
-                attachments.addAll(note.audios)
-            }
-            actionMode.close(false)
-            app.cancelNoteReminders(notes.toNoteIdReminders())
-            withContext(Dispatchers.IO) {
-                baseNoteDao.delete(ids)
-                app.deleteAttachments(attachments, ids, progress)
-            }
+    private suspend fun deleteBaseNotes(ids: LongArray): Collection<BaseNote> {
+        val notes = withContext(Dispatchers.IO) { baseNoteDao.getByIds(ids) }
+        actionMode.close(false)
+        app.cancelPinAndReminders(notes)
+        return withContext(Dispatchers.IO) {
+            baseNoteDao.delete(ids)
+            return@withContext notes
         }
     }
 
