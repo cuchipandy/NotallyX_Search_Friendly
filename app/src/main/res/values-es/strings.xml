@@ -263,7 +263,7 @@
     <string name="none">Ninguno</string>
     <string name="not_exists">\'%1$s’ no existe</string>
     <string name="note">Nota</string>
-    <string name="note_text_too_long_truncated">Texto demasiado largo, trucando a %1$d caracteres</string>
+    <string name="note_text_too_long_truncated">Texto demasiado largo, truncando a %1$d caracteres</string>
     <string name="note_too_big_truncating">La nota es demasiado grande para guardarla, ha sido truncada a %1$s caracteres (tenía %2$s)</string>
     <string name="notes">Notas</string>
     <string name="notes_sorted_by">Notas ordenadas por</string>

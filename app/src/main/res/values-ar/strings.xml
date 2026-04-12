@@ -94,7 +94,6 @@
     <string name="convert_to_text_note">تحويل إلى ملاحظة نصية</string>
     <string name="copied_link">تم نسخ الرابط إلى الحافظة</string>
     <string name="copy">نسخ</string>
-    <string name="count" translatable="false">للأسف، فشل تصدير النسخة الاحتياطية.\nيرجى استخدام زر \'%1$s\' للإبلاغ عن العطل</string>
     <string name="crash_export_backup_failed">للأسف، فشل تصدير النسخة الاحتياطية.\nيرجى استخدام زر \'%1$s\' للإبلاغ عن العطل.</string>
     <string name="crash_export_backup_message">يمكنك محاولة إنشاء نسخة احتياطية من ملاحظاتك بالنقر على \'%1$s\'.\nقد يفشل ذلك إذا أدى العطل إلى تلف البيانات. في هذه الحالة، يرجى استخدام زر \'%2$s\' للإبلاغ عن العطل</string>
     <string name="crash_message">حدث خطأ غير متوقع.\nنعتذر عن الإزعاج.</string>
