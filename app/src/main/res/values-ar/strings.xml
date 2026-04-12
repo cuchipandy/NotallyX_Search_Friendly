@@ -125,7 +125,6 @@
     <string name="delete_image_forever">هل تريد حذف الصورة نهائيًا؟</string>
     <string name="delete_label">هل تريد حذف التصنيف؟</string>
     <string name="delete_note_forever">هل تريد حذف الملاحظة نهائيًا؟</string>
-    <string name="delete_reminder">حذف التذكير</string>
     <string name="delete_reminder_question">هل تريد حذف التذكير؟</string>
     <string name="delete_selected_notes">هل تريد حذف الملاحظات المحددة؟</string>
     <string name="deleted">تم الحذف</string>
