@@ -23,8 +23,10 @@ import com.philkes.notallyx.presentation.widget.WidgetProvider
 import java.io.File
 import java.io.FileFilter
 import java.io.FileOutputStream
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
 import java.security.MessageDigest
 import java.util.zip.CRC32
@@ -369,7 +371,15 @@ private fun getDirectory(dir: File, name: String): File {
 
 private fun File.createDirectory() {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        Files.createDirectory(toPath())
+        try {
+            Files.createDirectory(toPath())
+        } catch (e: FileAlreadyExistsException) {
+            if (!isDirectory)
+                throw IOException(
+                    "Creating directory '${toPath()}' did not work because a file with that name already exists and was not properly deleted",
+                    e,
+                )
+        }
     } else mkdir()
 }
 
