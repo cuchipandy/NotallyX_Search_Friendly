@@ -160,6 +160,19 @@ abstract class EditActivity(private val type: Type) : LockedActivity<ActivityEdi
         }
     }
 
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        if (intent == null) return
+        setIntent(intent)
+        val selectedId = intent.getLongExtra(EXTRA_SELECTED_BASE_NOTE, -1L)
+        if (selectedId != -1L) {
+            lifecycleScope.launch {
+                checkSave()
+                loadNote(selectedId, null, null, false)
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         actionHandler.setupActivityResultLaunchers()
@@ -175,41 +188,8 @@ abstract class EditActivity(private val type: Type) : LockedActivity<ActivityEdi
             val persistedId = savedInstanceState?.getLong("id")
             val selectedId = intent.getLongExtra(EXTRA_SELECTED_BASE_NOTE, 0L)
             val id = persistedId ?: selectedId
-            if (persistedId == null || notallyModel.originalNote == null) {
-                notallyModel.setState(id, intent.data == null)
-            }
-            if (notallyModel.isNewNote) {
-                when (intent.action) {
-                    Intent.ACTION_SEND,
-                    Intent.ACTION_SEND_MULTIPLE,
-                    Intent.ACTION_VIEW -> handleSharedNote()
-                    else ->
-                        intent.getStringExtra(EXTRA_DISPLAYED_LABEL)?.let {
-                            notallyModel.setLabels(listOf(it))
-                        }
-                }
-            }
-
-            initBottomMenu()
-            resetToolbars()
-            setupListeners()
-            setStateFromModel(savedInstanceState)
-
-            if (
-                !notallyModel.isNewNote &&
-                    notallyModel.type == Type.LIST &&
-                    savedInstanceState == null
-            ) {
-                val lastUsedViewMode = notallyModel.viewMode.value
-                notallyModel.viewMode.value =
-                    preferences.defaultListNoteViewMode.value.toNoteViewMode(lastUsedViewMode)
-            }
-
-            configureUI()
-            binding.ScrollView.visibility = VISIBLE
-            setupEditNoteReminderChip()
+            loadNote(id, persistedId, savedInstanceState, true)
         }
-
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
             try {
                 updateModel()
@@ -221,6 +201,46 @@ abstract class EditActivity(private val type: Type) : LockedActivity<ActivityEdi
                 DEFAULT_EXCEPTION_HANDLER?.uncaughtException(thread, throwable)
             }
         }
+    }
+
+    private suspend fun loadNote(
+        id: Long,
+        persistedId: Long?,
+        savedInstanceState: Bundle?,
+        initListeners: Boolean,
+    ) {
+        changeHistory.reset()
+        if (persistedId == null || notallyModel.originalNote == null) {
+            notallyModel.setState(id, intent.data == null)
+        }
+        if (notallyModel.isNewNote) {
+            when (intent.action) {
+                Intent.ACTION_SEND,
+                Intent.ACTION_SEND_MULTIPLE,
+                Intent.ACTION_VIEW -> handleSharedNote()
+
+                else ->
+                    intent.getStringExtra(EXTRA_DISPLAYED_LABEL)?.let {
+                        notallyModel.setLabels(listOf(it))
+                    }
+            }
+        }
+
+        initBottomMenu()
+        resetToolbars()
+        if (initListeners) setupListeners()
+        setStateFromModel(savedInstanceState)
+
+        if (
+            !notallyModel.isNewNote && notallyModel.type == Type.LIST && savedInstanceState == null
+        ) {
+            val lastUsedViewMode = notallyModel.viewMode.value
+            notallyModel.viewMode.value =
+                preferences.defaultListNoteViewMode.value.toNoteViewMode(lastUsedViewMode)
+        }
+        if (initListeners) configureUI()
+        binding.ScrollView.visibility = VISIBLE
+        setupEditNoteReminderChip()
     }
 
     override fun onRestart() {
