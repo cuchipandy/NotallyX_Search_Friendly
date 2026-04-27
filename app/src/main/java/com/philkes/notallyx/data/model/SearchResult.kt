@@ -40,6 +40,10 @@ class SearchResult(
     private val resultFlow: Flow<List<Item>> =
         searchParams
             .debounce(300)
+            .map { params ->
+                // 🔥 filtro adicional de seguridad
+                if (params?.keyword?.length ?: 0 < 3) null else params
+            }
             .distinctUntilChanged()
             .flatMapLatest { params ->
                 if (params == null) {
