@@ -347,7 +347,7 @@ interface BaseNoteDao {
     ORDER BY pinned DESC, timestamp DESC
     LIMIT 50
     """)
-    fun getBaseNotesByKeywordImpl(keyword: String, folder: Folder): Flow<List<BaseNote>>
+    fun getBaseNotesByKeywordImpl(keyword: String, folder: Folder, label: String): Flow<List<BaseNote>>
 
     @Query("""
     SELECT * FROM BaseNote 
