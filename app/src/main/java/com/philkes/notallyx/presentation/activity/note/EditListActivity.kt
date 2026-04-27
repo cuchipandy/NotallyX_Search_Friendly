@@ -117,32 +117,33 @@ class EditListActivity : EditActivity(Type.LIST) {
     
         if (search.isBlank()) return 0
     
-        var processed = 0
+        var count = 0
     
-        return mapIndexed { idx, item ->
+        for (i in 0 until size()) {
     
-            if (processed >= 50) return@mapIndexed 0
+            if (count >= 50) break
     
+            val item = get(i)
             val index = item.body.indexOf(search, ignoreCase = true)
     
             if (index != -1) {
-                processed++
+                count++
     
                 adapter?.highlightText(
                     ListItemHighlight(
-                        idx,
+                        i,
                         resultPosCounter.getAndIncrement(),
                         index,
                         index + search.length,
                         false,
                     )
                 )
-                alreadyNotifiedItemPos.add(idx)
-                1
-            } else {
-                0
+    
+                alreadyNotifiedItemPos.add(i)
             }
-        }.sum()
+        }
+    
+        return count
     }
 
     private fun List<ListItem>.highlightSearch(
@@ -154,32 +155,33 @@ class EditListActivity : EditActivity(Type.LIST) {
     
         if (search.isBlank()) return 0
     
-        var processed = 0
+        var count = 0
     
-        return mapIndexed { idx, item ->
+        for (i in indices) {
     
-            if (processed >= 50) return@mapIndexed 0
+            if (count >= 50) break
     
+            val item = this[i]
             val index = item.body.indexOf(search, ignoreCase = true)
     
             if (index != -1) {
-                processed++
+                count++
     
                 adapter?.highlightText(
                     ListItemHighlight(
-                        idx,
+                        i,
                         resultPosCounter.getAndIncrement(),
                         index,
                         index + search.length,
                         false,
                     )
                 )
-                alreadyNotifiedItemPos.add(idx)
-                1
-            } else {
-                0
+    
+                alreadyNotifiedItemPos.add(i)
             }
-        }.sum()
+        }
+    
+        return count
     }
 
     override fun highlightSearchResults(search: String): Int {
@@ -199,9 +201,17 @@ class EditListActivity : EditActivity(Type.LIST) {
                     alreadyNotifiedItemPos
                 ) ?: 0)
     
-        // ✅ SOLO refrescar los que cambian
-        alreadyNotifiedItemPos.forEach {
-            adapter?.notifyItemChanged(it)
+        // ✅ Refrescar correctamente ambos adapters
+        items.forEachIndexed { index, _ ->
+            if (alreadyNotifiedItemPos.contains(index)) {
+                adapter?.notifyItemChanged(index)
+            }
+        }
+    
+        itemsChecked?.forEachIndexed { index, _ ->
+            if (alreadyNotifiedItemPos.contains(index)) {
+                adapterChecked?.notifyItemChanged(index)
+            }
         }
     
         return amount
