@@ -1,5 +1,7 @@
 package com.philkes.notallyx.presentation.activity.note
 
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
