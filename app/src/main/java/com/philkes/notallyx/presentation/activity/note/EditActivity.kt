@@ -692,7 +692,7 @@ abstract class EditActivity(private val type: Type) : LockedActivity<ActivityEdi
                 searchJob?.cancel()
             
                 searchJob = lifecycleScope.launch {
-                    delay(250) // 👈 clave absoluta
+                    delay(120) // 👈 clave absoluta
             
                     if (query.length < 2) {
                         highlightSearchResults("")
