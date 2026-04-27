@@ -122,7 +122,15 @@ class BaseNoteModel(private val app: Application) : AndroidViewModel(app) {
     var keyword = String()
         set(value) {
             if (field != value || searchResults?.value?.isEmpty() == true) {
+    
                 field = value
+    
+                // 🔥 FILTRO MÍNIMO
+                if (value.length < 3) {
+                    searchResults!!.fetch("___NO_MATCH___", folder.value, currentLabel)
+                    return
+                }
+    
                 searchResults!!.fetch(keyword, folder.value, currentLabel)
             }
         }
