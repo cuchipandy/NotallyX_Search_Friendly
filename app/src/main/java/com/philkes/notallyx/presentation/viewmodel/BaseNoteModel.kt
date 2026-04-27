@@ -121,18 +121,17 @@ class BaseNoteModel(private val app: Application) : AndroidViewModel(app) {
 
     var keyword = String()
         set(value) {
-            if (field != value || searchResults?.value?.isEmpty() == true) {
     
-                field = value
+            if (field == value) return
     
-                // 🔥 FILTRO MÍNIMO
-                if (value.length < 3) {
-                    searchResults!!.fetch("___NO_MATCH___", folder.value, currentLabel)
-                    return
-                }
+            field = value
     
-                searchResults!!.fetch(keyword, folder.value, currentLabel)
+            // 🔥 NO BUSCAR si < 3 caracteres
+            if (value.length < 3) {
+                return
             }
+    
+            searchResults?.fetch(value, folder.value, currentLabel)
         }
 
     var searchResults: SearchResult? = null
@@ -157,7 +156,9 @@ class BaseNoteModel(private val app: Application) : AndroidViewModel(app) {
     fun startObserving() {
         NotallyDatabase.getDatabase(app).observeForever(::init)
         folder.observeForever { newFolder ->
-            searchResults!!.fetch(keyword, newFolder, currentLabel)
+            if (keyword.length >= 3) {
+                searchResults?.fetch(keyword, newFolder, currentLabel)
+            }
         }
     }
 
