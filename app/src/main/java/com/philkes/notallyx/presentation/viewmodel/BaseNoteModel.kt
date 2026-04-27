@@ -126,8 +126,9 @@ class BaseNoteModel(private val app: Application) : AndroidViewModel(app) {
     
             field = value
     
-            // 🔥 NO BUSCAR si < 3 caracteres
             if (value.length < 3) {
+                // 🔥 limpiar resultados visibles
+                searchResults?.fetch("", folder.value, currentLabel)
                 return
             }
     
