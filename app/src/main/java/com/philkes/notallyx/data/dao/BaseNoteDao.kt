@@ -312,12 +312,12 @@ interface BaseNoteDao {
         label: String?,
     ): Flow<List<BaseNote>> {
     
-        val normalized = "$keyword%" // 👈 clave
+        val normalized = "$keyword%"
     
         return when (label) {
             null -> getBaseNotesByKeywordUnlabeledImpl(normalized, folder)
             "" -> getBaseNotesByKeywordImpl(normalized, folder)
-            else -> getBaseNotesByKeywordImpl(normalized, folder, label)
+            else -> getBaseNotesByKeywordWithLabelImpl(normalized, folder, label)
         }
     }
 
@@ -333,8 +333,7 @@ interface BaseNoteDao {
     """)
     fun getBaseNotesByKeywordImpl(
         keyword: String,
-        folder: Folder,
-        label: String,
+        folder: Folder
     ): Flow<List<BaseNote>>
 
     @Query("""
@@ -347,7 +346,11 @@ interface BaseNoteDao {
     ORDER BY pinned DESC, timestamp DESC
     LIMIT 50
     """)
-    fun getBaseNotesByKeywordImpl(keyword: String, folder: Folder, label: String): Flow<List<BaseNote>>
+    fun getBaseNotesByKeywordWithLabelImpl(
+        keyword: String,
+        folder: Folder,
+        label: String
+    ): Flow<List<BaseNote>>
 
     @Query("""
     SELECT * FROM BaseNote 
@@ -359,7 +362,10 @@ interface BaseNoteDao {
     ORDER BY pinned DESC, timestamp DESC
     LIMIT 50
     """)
-    fun getBaseNotesByKeywordUnlabeledImpl(keyword: String, folder: Folder): Flow<List<BaseNote>>
+    fun getBaseNotesByKeywordUnlabeledImpl(
+        keyword: String,
+        folder: Folder
+    ): Flow<List<BaseNote>>
 
     companion object {
         private const val TAG = "BaseNoteDao"
