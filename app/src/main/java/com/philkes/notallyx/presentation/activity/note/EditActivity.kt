@@ -97,7 +97,8 @@ abstract class EditActivity(private val type: Type) : LockedActivity<ActivityEdi
     private lateinit var audioAdapter: AudioAdapter
     private lateinit var fileAdapter: PreviewFileAdapter
     protected var search = Search()
-
+    private var searchJob: Job? = null
+    
     internal val notallyModel: NotallyModel by viewModels()
     protected val actionHandler: NoteActionHandler by lazy { NoteActionHandler(this, notallyModel) }
 
@@ -682,8 +683,22 @@ abstract class EditActivity(private val type: Type) : LockedActivity<ActivityEdi
 
         binding.EnterSearchKeyword.apply {
             doAfterTextChanged { text ->
-                this@EditActivity.search.query = text.toString()
-                updateSearchResults(this@EditActivity.search.query)
+            
+                val query = text.toString()
+                this@EditActivity.search.query = query
+            
+                searchJob?.cancel()
+            
+                searchJob = lifecycleScope.launch {
+                    delay(250) // 👈 clave absoluta
+            
+                    if (query.length < 2) {
+                        highlightSearchResults("")
+                        return@launch
+                    }
+            
+                    updateSearchResults(query)
+                }
             }
         }
         setupAdditionalListeners()
