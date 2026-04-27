@@ -208,9 +208,11 @@ class EditListActivity : EditActivity(Type.LIST) {
             }
         }
     
-        itemsChecked?.forEachIndexed { index, _ ->
-            if (alreadyNotifiedItemPos.contains(index)) {
-                adapterChecked?.notifyItemChanged(index)
+        itemsChecked?.let { list ->
+            for (i in 0 until list.size()) {
+                if (alreadyNotifiedItemPos.contains(i)) {
+                    adapterChecked?.notifyItemChanged(i)
+                }
             }
         }
     
