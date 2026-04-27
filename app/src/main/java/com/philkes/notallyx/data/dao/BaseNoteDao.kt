@@ -311,53 +311,55 @@ interface BaseNoteDao {
         folder: Folder,
         label: String?,
     ): Flow<List<BaseNote>> {
-        val result =
-            when (label) {
-                null -> getBaseNotesByKeywordUnlabeledImpl(keyword, folder)
-                "" -> getBaseNotesByKeywordImpl(keyword, folder)
-                else -> getBaseNotesByKeywordImpl(keyword, folder, label)
-            }
-        return result.map { list -> list.filter { baseNote -> matchesKeyword(baseNote, keyword) } }
+    
+        val normalized = "$keyword%" // 👈 clave
+    
+        return when (label) {
+            null -> getBaseNotesByKeywordUnlabeledImpl(normalized, folder)
+            "" -> getBaseNotesByKeywordImpl(normalized, folder)
+            else -> getBaseNotesByKeywordImpl(normalized, folder, label)
+        }
     }
 
-    @Query(
-        "SELECT * FROM BaseNote WHERE folder = :folder AND labels LIKE '%' || :label || '%' AND (title LIKE '%' || :keyword || '%' OR body LIKE '%' || :keyword || '%' OR items LIKE '%' || :keyword || '%') ORDER BY pinned DESC, timestamp DESC"
-    )
+    @Query("""
+    SELECT * FROM BaseNote 
+    WHERE folder = :folder 
+    AND (title LIKE :keyword 
+    OR body LIKE :keyword 
+    OR items LIKE :keyword 
+    OR labels LIKE :keyword)
+    ORDER BY pinned DESC, timestamp DESC
+    LIMIT 50
+    """)
     fun getBaseNotesByKeywordImpl(
         keyword: String,
         folder: Folder,
         label: String,
     ): Flow<List<BaseNote>>
 
-    @Query(
-        "SELECT * FROM BaseNote WHERE folder = :folder AND (title LIKE '%' || :keyword || '%' OR body LIKE '%' || :keyword || '%' OR items LIKE '%' || :keyword || '%' OR labels LIKE '%' || :keyword || '%') ORDER BY pinned DESC, timestamp DESC"
-    )
+    @Query("""
+    SELECT * FROM BaseNote 
+    WHERE folder = :folder 
+    AND labels LIKE '%' || :label || '%' 
+    AND (title LIKE :keyword 
+    OR body LIKE :keyword 
+    OR items LIKE :keyword)
+    ORDER BY pinned DESC, timestamp DESC
+    LIMIT 50
+    """)
     fun getBaseNotesByKeywordImpl(keyword: String, folder: Folder): Flow<List<BaseNote>>
 
-    @Query(
-        "SELECT * FROM BaseNote WHERE folder = :folder AND labels == '[]' AND (title LIKE '%' || :keyword || '%' OR body LIKE '%' || :keyword || '%' OR items LIKE '%' || :keyword || '%') ORDER BY pinned DESC, timestamp DESC"
-    )
+    @Query("""
+    SELECT * FROM BaseNote 
+    WHERE folder = :folder 
+    AND labels == '[]' 
+    AND (title LIKE :keyword 
+    OR body LIKE :keyword 
+    OR items LIKE :keyword)
+    ORDER BY pinned DESC, timestamp DESC
+    LIMIT 50
+    """)
     fun getBaseNotesByKeywordUnlabeledImpl(keyword: String, folder: Folder): Flow<List<BaseNote>>
-
-    private fun matchesKeyword(baseNote: BaseNote, keyword: String): Boolean {
-        if (baseNote.title.contains(keyword, true)) {
-            return true
-        }
-        if (baseNote.body.contains(keyword, true)) {
-            return true
-        }
-        for (label in baseNote.labels) {
-            if (label.contains(keyword, true)) {
-                return true
-            }
-        }
-        for (item in baseNote.items) {
-            if (item.body.contains(keyword, true)) {
-                return true
-            }
-        }
-        return false
-    }
 
     companion object {
         private const val TAG = "BaseNoteDao"
