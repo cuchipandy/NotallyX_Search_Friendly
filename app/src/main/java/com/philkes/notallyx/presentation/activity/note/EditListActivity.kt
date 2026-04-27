@@ -224,10 +224,10 @@ class EditListActivity : EditActivity(Type.LIST) {
         if (selectedItemPos == -1 && adapterChecked != null) {
             selectedItemPos = adapterChecked!!.selectHighlight(resultPos)
             if (selectedItemPos != -1) {
-                binding.CheckedListView.scrollToItemPosition(selectedItemPos)
+                binding.CheckedListView.smoothToItemPosition(selectedItemPos)
             }
         } else if (selectedItemPos != -1) {
-            binding.MainListView.scrollToItemPosition(selectedItemPos)
+            binding.MainListView.smoothToItemPosition(selectedItemPos)
         }
     }
 
