@@ -39,7 +39,7 @@ class SearchResult(
     @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
     private val resultFlow: Flow<List<Item>> =
         searchParams
-            .debounce(100)
+            .debounce(300)
             .distinctUntilChanged()
             .flatMapLatest { params ->
                 if (params == null) {
