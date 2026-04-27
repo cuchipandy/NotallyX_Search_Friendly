@@ -189,8 +189,10 @@ class EditListActivity : EditActivity(Type.LIST) {
         val resultPosCounter = AtomicInteger(0)
         val alreadyNotifiedItemPos = mutableSetOf<Int>()
     
-        adapter?.clearHighlights()
-        adapterChecked?.clearHighlights()
+        if (search.isNotBlank()) {
+            adapter?.clearHighlights()
+            adapterChecked?.clearHighlights()
+        }
     
         val amount =
             items.highlightSearch(search, adapter, resultPosCounter, alreadyNotifiedItemPos) +
@@ -234,7 +236,6 @@ class EditListActivity : EditActivity(Type.LIST) {
     private fun RecyclerView.scrollToItemPosition(position: Int) {
         post {
             findViewHolderForAdapterPosition(position)?.itemView?.let {
-                binding.ScrollView.scrollTo(0, top + it.top)
             }
         }
     }
