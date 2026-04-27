@@ -41,10 +41,22 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file(providers.gradleProperty("RELEASE_STORE_FILE").get())
-            storePassword = providers.gradleProperty("RELEASE_STORE_PASSWORD").get()
-            keyAlias = providers.gradleProperty("RELEASE_KEY_ALIAS").get()
-            keyPassword = providers.gradleProperty("RELEASE_KEY_PASSWORD").get()
+            val storeFileProp = providers.gradleProperty("RELEASE_STORE_FILE").orNull
+            val storePasswordProp = providers.gradleProperty("RELEASE_STORE_PASSWORD").orNull
+            val keyAliasProp = providers.gradleProperty("RELEASE_KEY_ALIAS").orNull
+            val keyPasswordProp = providers.gradleProperty("RELEASE_KEY_PASSWORD").orNull
+    
+            if (
+                storeFileProp != null &&
+                storePasswordProp != null &&
+                keyAliasProp != null &&
+                keyPasswordProp != null
+            ) {
+                storeFile = file(storeFileProp)
+                storePassword = storePasswordProp
+                keyAlias = keyAliasProp
+                keyPassword = keyPasswordProp
+            }
         }
     }
 
@@ -58,11 +70,15 @@ android {
             isCrunchPngs = false
             isMinifyEnabled = true
             isShrinkResources = true
+        
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
+        
+            if (providers.gradleProperty("RELEASE_STORE_FILE").isPresent) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
         create("beta"){
             initWith(getByName("release"))
